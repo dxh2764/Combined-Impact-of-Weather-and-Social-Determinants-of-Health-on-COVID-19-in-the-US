@@ -1,0 +1,90 @@
+```{r}
+df = read.csv("US_counties_COVID19_health_weather_data.csv", header=TRUE)
+head(df)
+```
+
+```{r}
+library(ggplot2)
+library(psych)
+library(tidyverse)
+library(viridis)
+library(cowplot)
+library(knitr)
+
+```
+
+```{r}
+eda = subset(df,select = c("state", "deaths", "cases"))
+eda = eda %>% group_by(state) %>%
+          summarise(total_cases = sum(cases),
+                    total_deaths = sum(deaths),
+                    .groups = 'drop')
+eda_cases = eda %>% arrange(desc(total_cases))
+eda_cases = head(eda_cases, n=5)
+eda_cases
+```
+
+```{r}
+ggplot(data=eda_cases, aes(x=total_cases, y=state)) +
+  geom_bar(stat='identity', aes(fill=total_cases)) +
+  coord_flip() +
+  theme_grey() + 
+  scale_fill_gradient(name="Total Cases") +
+  labs(title="Total Cases per State", y="State", x="# of Cases") +
+  geom_hline(yintercept = mean(eda_cases$total_cases), size=1, color='blue')
+```
+
+```{r}
+eda_deaths = eda %>% arrange(desc(total_deaths))
+eda_deaths = head(eda_deaths, n=5)
+eda_deaths
+
+ggplot(data=eda_deaths, aes(x=total_deaths, y=state)) +
+  geom_bar(stat='identity', aes(fill=total_deaths)) +
+  coord_flip() +
+  theme_grey() + 
+  scale_fill_gradient(name="Total Deaths") +
+  labs(title="Total Deaths per State", y="States", x="# of Deaths") +
+  geom_hline(yintercept = mean(eda_deaths$total_deaths), size=1, color='blue')
+```
+
+```{r}
+glimpse(df)
+```
+```{r}
+table(is.na(df))
+```
+
+
+```{r}
+df %>%
+  group_by(cases) %>%
+  summarize(percent_frequent_mental_distress = mean(percent_frequent_mental_distress), 
+            avg_temp = mean(mean_temp, na.rm = TRUE)) %>%
+  ggplot(aes(x=avg_temp, y=percent_frequent_mental_distress)) + 
+  geom_point() + 
+  labs(x="Average Temperature, Jan 2020 - Dec 2020", y = "% Frequently Mental Distress") + 
+  geom_smooth(method = "lm")   
+```
+
+
+```{r}
+names(df)[names(df) == "percentile_rank_multi_unit_housing"] <- "multi_unit_housing"
+names(df)[names(df) == "average_number_of_physically_unhealthy_days"] <- "phys_unhealt"
+names(df)[names(df) == "percent_frequent_mental_distress"] <- "mental_distress"
+names(df)[names(df) == "percent_overcrowding"] <- "overcrowd"
+names(df)[names(df) == "severe_housing_cost_burden"] <- "house_cost_burd"
+names(df)[names(df) == "percent_severe_housing_problems"] <- "house_probs"
+names(df)[names(df) == "percent_unemployed_CDC"] <- "unemploy"
+names(df)[names(df) == "percent_no_highschool_diploma"] <- "highschool_dip"
+names(df)[names(df) == "percent_insufficient_sleep"] <- "insuff_sleep"
+df
+```
+
+```{r}
+df = df[,c("multi_unit_housing", "phys_unhealt", "rain", "mental_distress", "overcrowd", "house_cost_burd", "house_probs", "unemploy", "cases", "deaths")]
+res = cor(df)
+res
+
+corPlot(df, numbers=TRUE, cex=0.5, MAR=7, min.length = 50)
+```
